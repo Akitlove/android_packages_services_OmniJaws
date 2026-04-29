@@ -62,7 +62,7 @@ import static org.omnirom.omnijaws.LocationBrowseActivity.DATA_LOCATION_NAME;
 public class SettingsFragment extends PreferenceFragmentCompat implements OnPreferenceChangeListener,
         OmniJawsClient.OmniJawsObserver, OnCheckedChangeListener {
 
-    private static final String DEFAULT_WEATHER_ICON_PACKAGE = "org.omnirom.omnijaws.nothing";
+    private static final String DEFAULT_WEATHER_ICON_PACKAGE = "org.omnirom.omnijaws.google_new";
 
     private SharedPreferences mPrefs;
     private ListPreference mProvider;
