@@ -83,8 +83,8 @@ class WeatherSettingsActivity : ComponentActivity(), OmniJawsClient.OmniJawsObse
                             Intent(this, LocationPickerActivity::class.java)
                         )
                     },
-                    onIconVariantModeChanged = { viewModel.setIconVariantMode(it) },
                     onIconPackChanged = { viewModel.setIconPack(it) },
+                    onIconThemeChanged = { viewModel.setIconTheme(it) },
                     onOwmKeyChanged = { viewModel.setOwmKey(it) },
                     onRequestLocationPermission = { requestLocationPermissionIfNeeded() }
                 )

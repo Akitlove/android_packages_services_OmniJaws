@@ -108,6 +108,9 @@
             android:name=".outline"
             android:exported="false"
             android:label="Outline">
+            <meta-data
+                android:name="org.omnirom.omnijaws.SUPPORTS_THEMES"
+                android:value="true" />
             <intent-filter>
                 <action android:name="org.omnirom.WeatherIconPack" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -247,41 +250,27 @@
         <activity
             android:name=".google_new"
             android:exported="false"
-            android:label="Google New (Light / Dark)" >
+            android:label="Google New" >
+            <meta-data
+                android:name="org.omnirom.omnijaws.SUPPORTS_THEMES"
+                android:value="true" />
             <intent-filter>
                 <action android:name="org.omnirom.WeatherIconPack" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
-            <meta-data
-                android:name="org.omnirom.omnijaws.SUPPORTS_THEMED_VARIANTS"
-                android:value="true" />
-            <meta-data
-                android:name="org.omnirom.omnijaws.LIGHT_PREFIX"
-                android:value="google_new_light" />
-            <meta-data
-                android:name="org.omnirom.omnijaws.DARK_PREFIX"
-                android:value="google_new_dark" />
         </activity>
 
         <activity
             android:name=".nothing"
             android:exported="false"
-            android:label="Nothing (Light / Dark)" >
+            android:label="Nothing" >
+            <meta-data
+                android:name="org.omnirom.omnijaws.SUPPORTS_THEMES"
+                android:value="true" />
             <intent-filter>
                 <action android:name="org.omnirom.WeatherIconPack" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
-            <meta-data
-                android:name="org.omnirom.omnijaws.SUPPORTS_THEMED_VARIANTS"
-                android:value="true" />
-            <meta-data
-                android:name="org.omnirom.omnijaws.LIGHT_PREFIX"
-                android:value="nothing_light" />
-            <meta-data
-                android:name="org.omnirom.omnijaws.DARK_PREFIX"
-                android:value="nothing_dark" />
         </activity>
 
         <receiver
@@ -290,8 +279,8 @@
             android:label="@string/weather_widget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.LOCALE_CHANGED" />
                 <action android:name="android.intent.action.CONFIGURATION_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

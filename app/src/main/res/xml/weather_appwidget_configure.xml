@@ -26,18 +26,18 @@
         android:title="@string/color_theme_title" />
 
     <ListPreference
-        android:entries="@array/widget_icon_variant_entries"
-        android:entryValues="@array/widget_icon_variant_values"
-        android:key="icon_variant_mode"
-        android:persistent="false"
-        android:title="@string/icon_theme_title" />
-
-    <ListPreference
         android:entries="@array/bg_transparency_entries"
         android:entryValues="@array/bg_transparency_values"
         android:key="bg_transparency"
         android:persistent="false"
         android:title="@string/bg_transparency_title" />
+
+    <ListPreference
+        android:entries="@array/widget_icon_theme_entries"
+        android:entryValues="@array/widget_icon_theme_values"
+        android:key="widget_icon_theme"
+        android:persistent="false"
+        android:title="@string/icon_theme_title" />
 
     <PreferenceScreen
         android:summary="@string/weather_config_summary"

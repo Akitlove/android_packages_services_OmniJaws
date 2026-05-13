@@ -22,6 +22,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 
+import org.omnirom.omnijaws.icon.IconProvider;
+
 import androidx.preference.PreferenceManager;
 
 public class Config {
@@ -35,16 +37,11 @@ public class Config {
     public static final String PREF_KEY_ENABLE = "enable";
     public static final String PREF_KEY_UPDATE_INTERVAL = "update_interval";
     public static final String PREF_KEY_ICON_PACK = "icon_pack";
+    public static final String PREF_KEY_ICON_THEME = "app_icon_theme";
     public static final String PREF_KEY_UPDATE_ERROR = "update_error";
     public static final String PREF_KEY_OWM_KEY = "owm_key";
     public static final String PREF_KEY_HISTORY = "history";
     public static final String PREF_KEY_HISTORY_SIZE = "history_size";
-
-    public static final String PREF_KEY_ICON_VARIANT_MODE = "icon_variant_mode";
-
-    public static final String ICON_VARIANT_AUTO = "auto";
-    public static final String ICON_VARIANT_LIGHT = "light";
-    public static final String ICON_VARIANT_DARK = "dark";
 
     public static AbstractWeatherProvider getProvider(Context context) {
         SharedPreferences prefs = PreferenceManager
@@ -195,15 +192,18 @@ public class Config {
         prefs.edit().putString(PREF_KEY_ICON_PACK, value).commit();
     }
 
-    public static String getIconVariantMode(Context context) {
+    public static int getIconTheme(Context context) {
         SharedPreferences prefs = PreferenceManager
-            .getDefaultSharedPreferences(context);
-        return prefs.getString(PREF_KEY_ICON_VARIANT_MODE, ICON_VARIANT_AUTO);
+                .getDefaultSharedPreferences(context);
+        
+        return prefs.getInt(PREF_KEY_ICON_THEME, IconProvider.ICON_THEME_DEFAULT);
     }
 
-    public static void setIconVariantMode(Context context, String value) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        prefs.edit().putString(PREF_KEY_ICON_VARIANT_MODE, value).commit();
+    public static void setIconTheme(Context context, int value) {
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(context);
+
+        prefs.edit().putInt(PREF_KEY_ICON_THEME, value).commit();
     }
 
     public static boolean isUpdateError(Context context) {

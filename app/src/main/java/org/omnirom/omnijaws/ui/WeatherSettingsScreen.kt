@@ -45,6 +45,8 @@ import com.android.axion.compose.preferences.PreferenceGroup
 import com.android.axion.compose.preferences.SwitchPreference
 import com.android.axion.compose.scaffold.AxionScaffold
 
+import org.omnirom.omnijaws.icon.IconProvider
+
 @Composable
 fun WeatherSettingsScreen(
     state: SettingsUiState,
@@ -56,7 +58,7 @@ fun WeatherSettingsScreen(
     onCustomLocationChanged: (Boolean) -> Unit,
     onLocationPickerClick: () -> Unit,
     onIconPackChanged: (String) -> Unit,
-    onIconVariantModeChanged: (String) -> Unit,
+    onIconThemeChanged: (String) -> Unit,
     onOwmKeyChanged: (String) -> Unit,
     onRequestLocationPermission: () -> Unit
 ) {
@@ -165,20 +167,24 @@ fun WeatherSettingsScreen(
                         item {
                             ListPreference(
                                 title = "Icon pack",
-                                summary = state.iconPackLabel,
+                                summary = state.iconPacks.firstOrNull { it.value == state.iconPack }?.label,
                                 options = state.iconPacks.map { it.value to it.label },
                                 value = state.iconPack,
                                 onValueChange = onIconPackChanged
                             )
                         }
-                        if (state.selectedIconPackSupportsVariants) {
+                        if (state.iconPackSupportsTheming) {
                             item {
                                 ListPreference(
                                     title = "Icon theme",
-                                    summary = state.iconVariantLabel,
-                                    options = state.iconVariantOptions,
-                                    value = state.iconVariantMode,
-                                    onValueChange = onIconVariantModeChanged
+                                    summary = state.iconThemeLabel,
+                                    options = listOf(
+                                        IconProvider.ICON_THEME_SYSTEM.toString() to "Follow system",
+                                        IconProvider.ICON_THEME_LIGHT.toString() to "Light",
+                                        IconProvider.ICON_THEME_DARK.toString() to "Dark"
+                                    ),
+                                    value = state.iconTheme,
+                                    onValueChange = onIconThemeChanged
                                 )
                             }
                         }

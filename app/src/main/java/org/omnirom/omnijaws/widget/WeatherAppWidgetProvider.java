@@ -27,11 +27,12 @@ import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.COLO
 import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.COLOR_THEME_LIGHT;
 import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.KEY_BG_TRANS;
 import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.KEY_COLOR_THEME;
-import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.KEY_ICON_VARIANT_MODE;
-import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.ICON_VARIANT_FOLLOW_APP;
-import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.ICON_VARIANT_FOLLOW_WIDGET;
+import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.KEY_ICON_THEME;
 import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.clearPrefs;
 import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.remapPrefs;
+
+import org.omnirom.omnijaws.icon.IconProvider;
+import org.omnirom.omnijaws.icon.IconPack;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -40,6 +41,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -59,9 +61,6 @@ import org.omnirom.omnijaws.Config;
 import org.omnirom.omnijaws.R;
 import org.omnirom.omnijaws.SettingsActivity;
 import org.omnirom.omnijaws.WeatherActivity;
-import org.omnirom.omnijaws.WeatherIconPackManager;
-
-import static org.omnirom.omnijaws.widget.WeatherAppWidgetConfigureFragment.widgetKey;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -118,16 +117,15 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        if (LOGGING) {
-            Log.i(TAG, "onReceive: " + action);
-        }
 
         if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)
                 || Intent.ACTION_LOCALE_CHANGED.equals(action)) {
-            refreshAllWidgets(context);
-            return;
+            updateAllWidgets(context);
         }
 
+        if (LOGGING) {
+            Log.i(TAG, "onReceive: " + action);
+        }
         super.onReceive(context, intent);
     }
 
@@ -158,10 +156,6 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         }
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         updateWeather(context, appWidgetManager, appWidgetId);
-    }
-
-    private static void refreshAllWidgets(Context context) {
-        updateAllWeather(context);
     }
 
     public static void updateAllWeather(Context context) {
@@ -204,8 +198,8 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
     }
 
     private static void setupRemoteView(Context context, AppWidgetManager appWidgetManager,
-                                        int appWidgetId, RemoteViews widget,
-                                        int bgTrans, WidgetIconResolver iconResolver) {
+            int appWidgetId, RemoteViews widget,
+            int bgTrans, IconPack iconPack, boolean useResourceIcon, int iconNightMode) {
         if (!Config.isEnabled(context)) {
             showError(context, appWidgetManager, appWidgetId, EXTRA_ERROR_DISABLED, widget);
             return;
@@ -233,8 +227,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         String forecastData = getWeatherDataString(weatherData.forecasts.get(0).low,
                 weatherData.forecasts.get(0).high, weatherData.tempUnits);
 
-        setWeatherIcon(widget, R.id.forecast_image_0, context, iconResolver,
-            weatherData.forecasts.get(0).conditionCode);
+        setImageView(context, widget, iconPack, R.id.forecast_image_0, weatherData.forecasts.get(0).conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.forecast_text_0, dayShort);
         widget.setTextViewText(R.id.forecast_data_0, forecastData);
 
@@ -243,8 +236,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         forecastData = getWeatherDataString(weatherData.forecasts.get(1).low,
                 weatherData.forecasts.get(1).high, weatherData.tempUnits);
 
-        setWeatherIcon(widget, R.id.forecast_image_1, context, iconResolver,
-            weatherData.forecasts.get(1).conditionCode);
+        setImageView(context, widget, iconPack, R.id.forecast_image_1, weatherData.forecasts.get(1).conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.forecast_text_1, dayShort);
         widget.setTextViewText(R.id.forecast_data_1, forecastData);
 
@@ -253,8 +245,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         forecastData = getWeatherDataString(weatherData.forecasts.get(2).low,
                 weatherData.forecasts.get(2).high, weatherData.tempUnits);
 
-        setWeatherIcon(widget, R.id.forecast_image_2, context, iconResolver,
-            weatherData.forecasts.get(2).conditionCode);
+        setImageView(context, widget, iconPack, R.id.forecast_image_2, weatherData.forecasts.get(2).conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.forecast_text_2, dayShort);
         widget.setTextViewText(R.id.forecast_data_2, forecastData);
 
@@ -263,8 +254,7 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         forecastData = getWeatherDataString(weatherData.forecasts.get(3).low,
                 weatherData.forecasts.get(3).high, weatherData.tempUnits);
 
-        setWeatherIcon(widget, R.id.forecast_image_3, context, iconResolver,
-            weatherData.forecasts.get(3).conditionCode);
+        setImageView(context, widget, iconPack, R.id.forecast_image_3, weatherData.forecasts.get(3).conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.forecast_text_3, dayShort);
         widget.setTextViewText(R.id.forecast_data_3, forecastData);
 
@@ -273,15 +263,12 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         forecastData = getWeatherDataString(weatherData.forecasts.get(4).low,
                 weatherData.forecasts.get(4).high, weatherData.tempUnits);
 
-        setWeatherIcon(widget, R.id.forecast_image_4, context, iconResolver,
-            weatherData.forecasts.get(4).conditionCode);
+        setImageView(context, widget, iconPack, R.id.forecast_image_4, weatherData.forecasts.get(4).conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.forecast_text_4, dayShort);
         widget.setTextViewText(R.id.forecast_data_4, forecastData);
 
         String currentData = getWeatherDataString(weatherData.temp, null, weatherData.tempUnits);
-
-        setWeatherIcon(widget, R.id.current_image, context, iconResolver,
-            weatherData.conditionCode);
+        setImageView(context, widget, iconPack, R.id.current_image, weatherData.conditionCode, useResourceIcon, iconNightMode);
         widget.setTextViewText(R.id.current_text,
                 context.getResources().getText(R.string.omnijaws_current_text));
         widget.setTextViewText(R.id.current_data, currentData);
@@ -321,136 +308,42 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         if (LOGGING) {
             Log.i(TAG, "createRemoteViews");
         }
-
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        int theme = prefs.getInt(widgetKey(KEY_COLOR_THEME, appWidgetId), COLOR_THEME_DEFAULT);
-        int bgTrans = prefs.getInt(widgetKey(KEY_BG_TRANS, appWidgetId), BG_TRANS_DEFAULT);
+        int theme = prefs.getInt(KEY_COLOR_THEME + "_" + appWidgetId, COLOR_THEME_DEFAULT);
+        int bgTrans = prefs.getInt(KEY_BG_TRANS + "_" + appWidgetId, BG_TRANS_DEFAULT);
+        int widgetIconTheme = prefs.getInt(KEY_ICON_THEME + "_" + appWidgetId,
+                IconProvider.WIDGET_ICON_THEME_DEFAULT);
 
         int smallWidgetResId = R.layout.weather_appwidget_small_system;
         int largelWidgetResId = R.layout.weather_appwidget_large_system;
         int wideWidgetResId = R.layout.weather_appwidget_wide_system;
 
-        WidgetIconResolver iconResolver = createWidgetIconResolver(context, appWidgetId, theme);
-        String iconPack = Config.getIconPack(context);
+        IconPack iconPack = IconPack.fromConfig(context);
+        String iconPackValue = Config.getIconPack(context);
 
-        boolean isPackOutline = iconPack != null && !iconPack.isEmpty() && iconPack.equals("org.omnirom.omnijaws.outline");
+        int appIconTheme = Config.getIconTheme(context);
+        int iconNightMode = IconProvider.getWidgetIconNightMode(
+                widgetIconTheme, appIconTheme, theme);
 
-        switch (theme) {
-            case COLOR_THEME_SYSTEM:
-                if (isPackOutline) {
-                    smallWidgetResId = R.layout.weather_appwidget_small_tint_system;
-                    largelWidgetResId = R.layout.weather_appwidget_large_tint_system;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_tint_system;
-                } else {
-                    smallWidgetResId = R.layout.weather_appwidget_small_system;
-                    largelWidgetResId = R.layout.weather_appwidget_large_system;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_system;
-                }
-                break;
-            case COLOR_THEME_DARK:
-                if (isPackOutline) {
-                    smallWidgetResId = R.layout.weather_appwidget_small_tint_dark;
-                    largelWidgetResId = R.layout.weather_appwidget_large_tint_dark;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_tint_dark;
-                } else {
-                    smallWidgetResId = R.layout.weather_appwidget_small_dark;
-                    largelWidgetResId = R.layout.weather_appwidget_large_dark;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_dark;
-                }
-                break;
-            case COLOR_THEME_LIGHT:
-                if (isPackOutline) {
-                    smallWidgetResId = R.layout.weather_appwidget_small_tint_light;
-                    largelWidgetResId = R.layout.weather_appwidget_large_tint_light;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_tint_light;
-                } else {
-                    smallWidgetResId = R.layout.weather_appwidget_small_light;
-                    largelWidgetResId = R.layout.weather_appwidget_large_light;
-                    wideWidgetResId = R.layout.weather_appwidget_wide_light;
-                }
-                break;
-        }
+        boolean useResourceIcon = iconPack != null
+                && iconPack.supportsTheming
+                && iconPack.canUseLocalResources(context);
+
         RemoteViews smallView = new RemoteViews(context.getPackageName(), smallWidgetResId);
         setupRemoteView(context, appWidgetManager, appWidgetId, smallView,
-                bgTrans, iconResolver);
+                bgTrans, iconPack, useResourceIcon, iconNightMode);
         RemoteViews largeView = new RemoteViews(context.getPackageName(), largelWidgetResId);
         setupRemoteView(context, appWidgetManager, appWidgetId, largeView,
-                bgTrans, iconResolver);
+                bgTrans, iconPack, useResourceIcon, iconNightMode);
         RemoteViews wideView = new RemoteViews(context.getPackageName(), wideWidgetResId);
         setupRemoteView(context, appWidgetManager, appWidgetId, wideView,
-                bgTrans, iconResolver);
+                bgTrans, iconPack, useResourceIcon, iconNightMode);
         Map<SizeF, RemoteViews> viewMapping = new ArrayMap<>();
         viewMapping.put(new SizeF(50f, 50f), smallView);
         viewMapping.put(new SizeF(260f, 150f), largeView);
         viewMapping.put(new SizeF(200f, 50f), wideView);
         RemoteViews remoteViews = new RemoteViews(viewMapping);
         return remoteViews;
-    }
-
-    private static Drawable getWidgetConditionImage(
-            Context context, WidgetIconResolver resolver, int conditionCode) {
-        if (resolver == null) {
-            return OmniJawsClient.get().getWeatherConditionImage(context, conditionCode);
-        }
-        Drawable d = resolver.get(conditionCode);
-        return d != null ? d : OmniJawsClient.get().getWeatherConditionImage(context, conditionCode);
-    }
-
-    private static String getWidgetOverrideIconPack(Context context, int appWidgetId, int theme) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String mode = prefs.getString(widgetKey(KEY_ICON_VARIANT_MODE, appWidgetId),
-                ICON_VARIANT_FOLLOW_APP);
-
-        if (ICON_VARIANT_FOLLOW_APP.equals(mode)) {
-            return null;
-        }
-
-        String iconPack = Config.getIconPack(context);
-        if (iconPack == null || iconPack.isEmpty()) {
-            return null;
-        }
-
-        String variantMode = ICON_VARIANT_FOLLOW_WIDGET.equals(mode)
-                ? Config.ICON_VARIANT_AUTO
-                : mode;
-
-        return WeatherIconPackManager.resolveThemedIconPack(
-                context,
-                iconPack,
-                variantMode,
-                isWidgetDarkTheme(context, theme));
-    }
-
-    private static WidgetIconResolver createWidgetIconResolver(Context context, int appWidgetId, int theme) {
-        String iconPack = getWidgetOverrideIconPack(context, appWidgetId, theme);
-        if (iconPack == null || iconPack.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return new WidgetIconResolver(context, iconPack);
-        } catch (Exception e) {
-            Log.e(TAG, "createWidgetIconResolver", e);
-            return null;
-        }
-    }
-
-    private static boolean isWidgetDarkTheme(Context context, int theme) {
-        switch (theme) {
-            case COLOR_THEME_DARK:
-                return true;
-            case COLOR_THEME_LIGHT:
-                return false;
-            case COLOR_THEME_SYSTEM:
-            default:
-                return WeatherIconPackManager.isNightMode(context);
-        }
-    }
-
-    private static void setWeatherIcon(RemoteViews widget, int viewId, Context context,
-            WidgetIconResolver resolver, int conditionCode) {
-        Drawable d = getWidgetConditionImage(context, resolver, conditionCode);
-        widget.setImageViewBitmap(viewId, getBitmapDrawable(context, d).getBitmap());
     }
 
     private static void showError(Context context, AppWidgetManager appWidgetManager, int appWidgetId,
@@ -501,6 +394,28 @@ public class WeatherAppWidgetProvider extends AppWidgetProvider {
         image.draw(canvas);
 
         return new BitmapDrawable(context.getResources(), bmp);
+    }
+
+    public static void setImageView(Context context, RemoteViews widget, IconPack iconPack, int viewId,
+            int conditionCode, boolean useResourceIcon, int iconNightMode) {
+
+        if (useResourceIcon) {
+            Context iconContext = IconProvider.getIconContext(context, iconNightMode);
+            int resId = iconPack.getLocalResId(iconContext, conditionCode);
+
+            if (resId != IconPack.RESOURCE_NOT_FOUND) {
+                if (iconNightMode == Configuration.UI_MODE_NIGHT_UNDEFINED) {
+                    widget.setImageViewResource(viewId, resId);
+                } else {
+                    Drawable d = iconContext.getDrawable(resId);
+                    widget.setImageViewBitmap(viewId, getBitmapDrawable(iconContext, d).getBitmap());
+                }
+                return;
+            }
+        }
+
+        Drawable d = OmniJawsClient.get().getWeatherConditionImage(context, conditionCode);
+        widget.setImageViewBitmap(viewId, getBitmapDrawable(context, d).getBitmap());
     }
 
     private static String getWeatherDataString(String min, String max, String tempUnits) {
